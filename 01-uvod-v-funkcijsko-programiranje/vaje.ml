@@ -11,7 +11,15 @@
  predstavljen s seznamom števil s plavajočo vejico, pomnoži z danim skalarjem.
 [*----------------------------------------------------------------------------*)
 
-let razteg _ _ = ()
+let razteg skalar vektor = 
+  List.map (fun x -> skalar *. x) vektor
+
+let razteg skalar vektor = 
+  let f_raztega x = skalar *. x in
+  List.map f_raztega vektor 
+  
+let razteg skalar vektor =
+  List.map ( ( *. ) skalar ) vektor
 
 let primer_vektorji_1 = razteg 2.0 [1.0; 2.0; 3.0]
 (* val primer_vektorji_1 : float list = [2.; 4.; 6.] *)
@@ -21,7 +29,11 @@ let primer_vektorji_1 = razteg 2.0 [1.0; 2.0; 3.0]
  vsoto dveh vektorjev.
 [*----------------------------------------------------------------------------*)
 
-let sestej _ _ = ()
+let sestej vek1 vek2 _ = 
+  List.map2 (fun x y -> x +. y ) vek1 vek2
+
+let sestej vek1 vek2 _ = 
+  List.map2 (+.) vek1 vek2
 
 let primer_vektorji_2 = sestej [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
 (* val primer_vektorji_2 : float list = [5.; 7.; 9.] *)
@@ -35,7 +47,9 @@ let primer_vektorji_2 = sestej [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
 
 let vsota_seznama = List.fold_left (+.) 0.
 
-let skalarni_produkt _ _ = ()
+let skalarni_produkt v1 v2 = 
+  let produkt_komponent x y = List.map2 ( *. ) x y in
+  vsota_seznama (produkt_komponent v1 v2)
 
 let primer_vektorji_3 = skalarni_produkt [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
 (* val primer_vektorji_3 : float = 32. *)
@@ -45,7 +59,8 @@ let primer_vektorji_3 = skalarni_produkt [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
  vektorja.
 [*----------------------------------------------------------------------------*)
 
-let norma _ = ()
+let norma vektor = 
+  sqrt (skalarni_produkt vektor vektor)
 
 let primer_vektorji_4 = norma [3.0; 4.0]
 (* val primer_vektorji_4 : float = 5. *)
@@ -55,7 +70,8 @@ let primer_vektorji_4 = norma [3.0; 4.0]
  kot med dvema vektorjema v radianih.
 [*----------------------------------------------------------------------------*)
 
-let vmesni_kot _ _ = ()
+let vmesni_kot v1 v2 = 
+  Float.acos ( (skalarni_produkt v1 v2) /. (norma v1 *. norma v2) )
 
 let primer_vektorji_5 = vmesni_kot [1.0; 0.0] [0.0; 1.0]
 (* val primer_vektorji_5 : float = 1.57079632679489656 *)
@@ -65,7 +81,8 @@ let primer_vektorji_5 = vmesni_kot [1.0; 0.0] [0.0; 1.0]
  vektor.
 [*----------------------------------------------------------------------------*)
 
-let normirani _ = ()
+let normirani vektor = 
+  List.map ( fun x -> x /. norma vektor) vektor
 
 let primer_vektorji_6 = normirani [3.0; 4.0]
 (* val primer_vektorji_6 : float list = [0.600000000000000089; 0.8] *)
@@ -75,7 +92,8 @@ let primer_vektorji_6 = normirani [3.0; 4.0]
  izračuna projekcijo prvega vektorja na drugega.
 [*----------------------------------------------------------------------------*)
 
-let projekcija _ _ = ()
+let projekcija v1 v2 = 
+  List.map ( fun x -> x *. Float.cos (vmesni_kot v1 v2) ) v1
 
 let primer_vektorji_7 = projekcija [3.0; 4.0] [1.0; 0.0]
 (* val primer_vektorji_7 : float list = [3.; 0.] *)
@@ -89,7 +107,8 @@ let primer_vektorji_7 = projekcija [3.0; 4.0] [1.0; 0.0]
  oznake in vsebino ter vrne niz, ki predstavlja ustrezno HTML oznako.
 [*----------------------------------------------------------------------------*)
 
-let ovij _ _ = ()
+let ovij znacka niz = 
+  "<" ^ znacka ^ ">" ^ niz ^ "</" ^ znacka ^ ">"
 
 let primer_html_1 = ovij "h1" "Hello, world!"
 (* val primer_html_1 : string = "<h1>Hello, world!</h1>" *)
@@ -100,7 +119,8 @@ let primer_html_1 = ovij "h1" "Hello, world!"
  ustrezno število presledkov.
 [*----------------------------------------------------------------------------*)
 
-let zamakni _ _ = ()
+let zamakni n niz = 
+  String.concat ("\n" ^ (String.make n ' ')) (String.split_on_char '\n' ((String.make n ' ') ^ niz))
 
 let primer_html_2 = zamakni 4 "Hello,\nworld!"
 (* val primer_html_2 : string = "    Hello,\n    world!" *)
@@ -110,7 +130,11 @@ let primer_html_2 = zamakni 4 "Hello,\nworld!"
  niz, ki predstavlja ustrezno zamaknjen neurejeni seznam v HTML-ju:
 [*----------------------------------------------------------------------------*)
 
-let ul _ = ()
+let ul sez = 
+  let vrsta_html niz = ovij "li" niz in
+  let tocke_sez = String.concat "\n  " (List.map vrsta_html sez) in
+  ovij "ul" ("\n  " ^ tocke_sez ^ "\n") 
+  
 
 let primer_html_3 = ul ["ananas"; "banana"; "čokolada"]
 (* val primer_html_3 : string =
@@ -125,7 +149,10 @@ let primer_html_3 = ul ["ananas"; "banana"; "čokolada"]
  niz, ki vsebuje vejico, loči na del pred in del za njo.
 [*----------------------------------------------------------------------------*)
 
-let razdeli_vrstico _ = ()
+let razdeli_vrstico niz = 
+  let prvi = String.sub niz 0 (String.index_from niz 0 ',') in
+  let drugi = String.sub niz (String.index_from niz 0 ',') ((String.length niz) - 1) in
+  (prvi, drugi)
 
 let primer_seznam_1 = razdeli_vrstico "mleko, 2"
 (* val primer_seznam_1 : string * string = ("mleko", "2") *)
