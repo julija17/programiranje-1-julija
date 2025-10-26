@@ -380,7 +380,27 @@ let primer_permutacije_8 = cikli (inverz permutacija_2)
  ustreza.
 [*----------------------------------------------------------------------------*)
 
-let iz_transpozicij _ _ = ()
+let v_paru x par =
+  match par with
+  | (a, _) when a = x -> true
+  | (_, a) when a = x -> true
+  | (_, _) -> false
+
+let iz_transpozicij k sez_tr = 
+  let rec aux i permutacija =
+    if i < (List.length sez_tr) * 2 then
+      let tran = List.find (fun x -> v_paru i x) sez_tr in
+      let j = 
+        match tran with
+        | (a, x) when a = i -> x
+        | (x, a) when a = i -> x
+        | (_, _) -> failwith "napaka v transpoziciji"
+      in
+      aux (i + 1) (j :: permutacija)
+    else
+      permutacija
+  in
+  List.rev (aux 0 [])
 
 let primer_permutacije_9 = iz_transpozicij 4 [(0, 1); (2, 3)]
 (* val primer_permutacije_9 : int list = [1; 0; 3; 2] *)
@@ -397,7 +417,27 @@ let primer_permutacije_9 = iz_transpozicij 4 [(0, 1); (2, 3)]
  i_{k-1})\circ(i_1, i_3)\circ(i_1, i_2).$$
 [*----------------------------------------------------------------------------*)
 
-let v_transpozicije _ = ()
+let rec cikel_v_tr cik =
+  let prvi = List.nth cik 0 in 
+  let rec po_ciklu c transp =
+    match List.rev c with
+      | [] -> transp
+      | [_] -> transp
+      | x :: xs -> po_ciklu (List.rev xs) ((prvi, x) :: transp)
+  in
+  po_ciklu cik []
+  
+
+let v_transpozicije permutacija = 
+  let sez_ciklov = cikli permutacija in
+
+  let rec po_ciklih sez_ciklov sez_tr =
+    match sez_ciklov with
+    | [] -> sez_tr
+    | c :: ostali -> po_ciklih ostali (List.append (cikel_v_tr c) sez_tr)
+  in
+  List.rev (po_ciklih sez_ciklov [])
+
 
 let primer_permutacije_10 = v_transpozicije permutacija_1
 (* val primer_permutacije_10 : (int * int) list = [(0, 5); (1, 3)] *)
@@ -499,7 +539,14 @@ let primer_resitve : resitev = [|
  funkcija naj te možnosti ne uporablja, temveč naj sestavi in vrne novo tabelo.
 [*----------------------------------------------------------------------------*)
 
-let dodaj _ _ _ _ = ()
+let dodaj i j n (m : int option array array) = 
+  let f x y =
+    if x = i && y = j then
+      Some n
+    else
+      m.(x).(y)  
+  in
+  Array.init 9 (fun x -> Array.init 9 (fun y -> f x y))
 
 let primer_sudoku_1 = primer_mreze |> dodaj 0 8 2
 (* val primer_sudoku_1 : mreza =
@@ -522,8 +569,34 @@ let primer_sudoku_1 = primer_mreze |> dodaj 0 8 2
  -> string`, ki sprejmeta mrežo oziroma rešitev in vrneta niz, ki predstavlja
  izpis v zgornji obliki.
 [*----------------------------------------------------------------------------*)
+let int_opt_to_string x =
+  match x with
+  | Some n -> string_of_int n
+  | None -> "."
 
-let izpis_mreze _ = ""
+let izpis_vrste_opt vrsta =
+  let rec aux i izpis =
+    if i = 9 then
+      izpis
+    else if i = 2 || i = 5 || i = 8 then
+      aux (i + 1) (izpis ^ " " ^ int_opt_to_string vrsta.(i) ^" |")
+    else
+      aux (i + 1) (izpis ^ " " ^ int_opt_to_string vrsta.(i))
+  in
+  "|" ^ (aux 0 "")
+
+
+let izpis_mreze mreza = 
+  let crta = "+-------+-------+-------+\n" in
+  let rec aux i izpis =
+    if i = 9 then
+      izpis
+    else if i = 2 || i = 5 || i = 8 then
+      aux (i + 1) (izpis ^ (izpis_vrste_opt mreza.(i)) ^ "\n" ^ crta)
+    else 
+      aux (i + 1) (izpis ^ (izpis_vrste_opt mreza.(i)) ^ "\n")
+  in
+  aux 0 crta
 
 let primer_sudoku_2 = primer_mreze |> izpis_mreze |> print_endline
 (* 
@@ -544,7 +617,28 @@ let primer_sudoku_2 = primer_mreze |> izpis_mreze |> print_endline
   val primer_sudoku_2 : unit = ()
 *)
 
-let izpis_resitve _ = ""
+let izpis_vrste vrsta =
+  let rec aux i izpis =
+    if i = 9 then
+      izpis
+    else if i = 2 || i = 5 || i = 8 then
+      aux (i + 1) (izpis ^ " " ^ string_of_int vrsta.(i) ^" |")
+    else
+      aux (i + 1) (izpis ^ " " ^ string_of_int vrsta.(i))
+  in
+  "|" ^ (aux 0 "")
+
+let izpis_resitve mreza = 
+  let crta = "+-------+-------+-------+\n" in
+  let rec aux i izpis =
+    if i = 9 then
+      izpis
+    else if i = 2 || i = 5 || i = 8 then
+      aux (i + 1) (izpis ^ (izpis_vrste mreza.(i)) ^ "\n" ^ crta)
+    else 
+      aux (i + 1) (izpis ^ (izpis_vrste mreza.(i)) ^ "\n")
+  in
+  aux 0 crta
 
 let primer_sudoku_3 = primer_resitve |> izpis_resitve |> print_endline
 (*
@@ -575,7 +669,23 @@ let primer_sudoku_3 = primer_resitve |> izpis_resitve |> print_endline
  mreži podana številka, v rešitvi nahaja enaka številka.
 [*----------------------------------------------------------------------------*)
 
-let ustreza _ _ = ()
+let ustreza mreza resitev = 
+  let rec po_vrstah i =
+    if i = 9 then true
+    else
+      let rec po_stolpcih j =
+        if j = 9 then po_vrstah (i + 1)
+        else 
+          match mreza.(i).(j) with
+          | Some n when n = resitev.(i).(j) -> po_stolpcih (j + 1)
+          | Some n -> false
+          | None -> po_stolpcih (j + 1)
+      in
+      po_stolpcih 0
+  in
+  po_vrstah 0
+
+
 
 let primer_sudoku_4 = ustreza primer_mreze primer_resitve
 (* val primer_sudoku_4 : bool = true *)
@@ -608,7 +718,16 @@ let primer_sudoku_4 = ustreza primer_mreze primer_resitve
  ```
 [*----------------------------------------------------------------------------*)
 
-let ni_v_vrstici _ _  = ()
+let ni_v_vrstici (mreza, i) n = 
+  let rec aux j =
+    if j = 9 then true
+    else
+      match mreza.(i).(j) with
+      | x when x = Some n -> false
+      | _ -> aux (j + 1)
+  in
+  aux 0
+
 
 let primer_sudoku_5 = ni_v_vrstici (primer_mreze, 0) 1
 (* val primer_sudoku_5 : bool = true *)
@@ -616,9 +735,48 @@ let primer_sudoku_5 = ni_v_vrstici (primer_mreze, 0) 1
 let primer_sudoku_6 = ni_v_vrstici (primer_mreze, 1) 1
 (* val primer_sudoku_6 : bool = false *)
 
-let ni_v_stolpci _ _  = ()
+let ni_v_stolpcu (mreza, j) n = 
+  let rec aux i =
+    if i = 9 then true
+    else
+      match mreza.(i).(j) with
+      | x when x = Some n -> false
+      | _ -> aux (i + 1)
+  in
+  aux 0
 
-let ni_v_skatli _ _  = ()
+ 
+let lokacija_skatle index =
+  match index with
+  | 0 -> (0, 0)
+  | 1 -> (0, 3)
+  | 2 -> (0, 6)
+  | 3 -> (3, 0)
+  | 4 -> (3, 3)
+  | 5 -> (3, 6)
+  | 6 -> (6, 0)
+  | 7 -> (6, 3)
+  | 8 -> (6, 6)
+  | _ -> failwith "Napačen indeks škatle."
+
+
+let ni_v_skatli (mreza, index) n =
+  let v = fst (lokacija_skatle index) in
+  let s = snd (lokacija_skatle index) in
+
+  let rec po_vrstah_skatle i =
+    if i = 3 then true
+    else 
+      let rec po_stolpcih_skatle j =
+        if j = 3 then po_vrstah_skatle (i + 1)
+        else 
+          match mreza.(i + v).(j + s) with
+          | x when x = Some n -> false
+          | _ -> po_stolpcih_skatle (j + 1)
+      in
+      po_stolpcih_skatle 0
+  in
+  po_vrstah_skatle 0
 
 (*----------------------------------------------------------------------------*
  Napišite funkcijo `kandidati : mreza -> int -> int -> int list option`, ki
@@ -626,8 +784,37 @@ let ni_v_skatli _ _  = ()
  številk, ki se lahko pojavijo na tem mestu. Če je polje že izpolnjeno, naj
  funkcija vrne `None`.
 [*----------------------------------------------------------------------------*)
+let index_skatle i j =
+  if i <= 2 then 
+    if j <= 2 then 0
+    else if j <= 5 then 1
+    else 2
+  else if i <= 5 then
+    if j <= 2 then 3
+    else if j <= 5 then 4
+    else 5
+  else 
+    if j <= 2 then 6
+    else if j <= 5 then 7
+    else 8
 
-let kandidati _ _ _ = ()
+
+let kandidati mreza i j = 
+  if mreza.(i).(j) = None then 
+    let rec po_cifrah n mozni =
+      let vr_st_sk = [ni_v_vrstici (mreza, i) n; ni_v_stolpcu (mreza, j) n; ni_v_skatli (mreza, index_skatle i j) n] in
+      if n = 0 then
+        mozni
+      else if List.mem false vr_st_sk then
+        po_cifrah (n - 1) mozni
+      else
+        po_cifrah (n - 1) (n :: mozni)
+    in
+    Some (po_cifrah 9 [])
+  else 
+    None
+
+
 
 let primer_sudoku_7 = kandidati primer_mreze 0 2
 (* val primer_sudoku_7 : int list option = Some [1; 2; 3] *)
@@ -649,8 +836,50 @@ let primer_sudoku_8 = kandidati primer_mreze 0 0
  *Namig: Poiščite celico mreže z najmanj kandidati in rekurzivno preizkusite vse
  možnosti.*
 [*----------------------------------------------------------------------------*)
+let list_opt_to_list x =
+  match x with
+  | Some list -> list
+  | None -> [1; 2; 3; 4; 5; 6; 7; 8; 9]
 
-let rec resi _ = ()
+let resitev mreza =
+  Array.init 9 (fun i -> Array.init 9 (fun j -> Option.get mreza.(i).(j)))
+
+
+let min_kandidatov mreza =
+  let rec po_vrstah i min_sez min_i min_j =
+    if i = 9 then (min_sez, (min_i, min_j))
+    else
+      let rec po_stolpcih j min_sez min_i min_j =
+        if j = 9 then po_vrstah (i + 1) min_sez min_i min_j 
+        else if List.length (list_opt_to_list (kandidati mreza i j)) < List.length min_sez then
+          po_stolpcih (j + 1) (list_opt_to_list (kandidati mreza i j)) i j
+        else 
+          po_stolpcih (j + 1) min_sez min_i min_j 
+      in
+    po_stolpcih 0 min_sez min_i min_j 
+  in
+  po_vrstah 0 [1; 2; 3; 4; 5; 6; 7; 8; 9] 9 9
+
+let rec resi mreza = 
+  let rec po_kandidatih k mreza =
+    let kand = fst (min_kandidatov mreza) in
+
+    (*če ne najdemo ustreznega kandidata - protislovje*)
+    if List.length kand = 0 then po_kandidatih (k + 1) mreza
+    (*če je cel sudoku že zapolnjen*)
+    else if List.length kand = 9 then Some (resitev mreza)
+
+    else if k = List.length kand then
+      None
+    else
+      let cifra = List.nth kand k in
+      let i = fst (snd (min_kandidatov mreza)) in
+      let j = snd (snd (min_kandidatov mreza)) in
+      let nova_mreza = dodaj i j cifra mreza in
+      resi nova_mreza
+  in
+  po_kandidatih 0 mreza
+
 
 let primer_sudoku_9 = resi primer_mreze
 (* val primer_sudoku_9 : resitev option =
