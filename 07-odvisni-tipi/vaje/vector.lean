@@ -1,83 +1,137 @@
--- Vzamemo stvari iz predavanj
+-- Izklopimo samodejno določanje tipov, ki jih lahko Lean izpelje iz konteksta.
 set_option autoImplicit false
 
-inductive Naravno : Type where
-  | nic : Naravno
-  | naslednik : Naravno → Naravno
-deriving Repr
+-- Uporabljamo definicije iz predavanj
 
 
-def plus : Naravno → Naravno → Naravno :=
-  fun m n =>
-    match m with
-    | Naravno.nic => n
-    | Naravno.naslednik m' =>
-        Naravno.naslednik (plus m' n)
+-- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+-- Seznami
+inductive SeznamBoolov : Type where
+  | prazen : SeznamBoolov
+  | sestavljen : Bool -> SeznamBoolov -> SeznamBoolov
 
--- Vektorji
-
-inductive Vektor : Type → Naravno → Type where
-  | prazen : {A : Type} → Vektor A Naravno.nic
-  | sestavljen : {A : Type} → {n : Naravno} → A → Vektor A n → Vektor A (Naravno.naslednik n)
-deriving Repr
-
-#check (Vektor.sestavljen "a" (Vektor.sestavljen "b" (Vektor.prazen)))
-
-def stakni_vektorja : {A : Type} → {m n : Naravno} → Vektor A m → Vektor A n → Vektor A (plus m n) :=
-  fun {A : Type} {m n : Naravno} (xs : Vektor A m) (ys : Vektor A n) =>
+def stakniSeznam :
+  SeznamBoolov ->
+  SeznamBoolov ->
+  SeznamBoolov
+:=
+  fun xs ys =>
     match xs with
-    | Vektor.prazen => ys
-    | Vektor.sestavljen x xs' => Vektor.sestavljen x (stakni_vektorja xs' ys)
+    | SeznamBoolov.prazen =>
+        ys
+    | SeznamBoolov.sestavljen x xs' =>
+        .sestavljen x (stakniSeznam xs' ys)
+-- Dovoli tudi .sestavljen x (stakniSeznam xs' xs'),
+-- Dovoli tudi .sestavljen x (stakniSeznam xs' (SeznamBoolov.sestavljen x xs')) ipd.
 
 
--- Sedaj lahko definiramo `lookup`, ki ne bo nikoli povzročil napake.
-inductive Finite : Naravno -> Type where
-  | fzero : {n : Naravno} -> Finite (Naravno.naslednik n)
-  | fsucc : {n : Naravno} -> Finite n -> Finite (Naravno.naslednik n)
+-- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+-- Vektorji
+inductive VektorBoolov : Nat -> Type where
+  | prazen : VektorBoolov 0
+  | sestavljen :
+      {n : Nat} ->
+      Bool ->
+      VektorBoolov n ->
+      VektorBoolov (Nat.succ n)
+
+-- Različne implementacije funkcije za stikanje vektorjev
+def stakniVektor {m n : Nat} :
+  VektorBoolov m ->
+  VektorBoolov n ->
+  VektorBoolov (n + m)
+:=
+  fun xs ys =>
+    match xs with
+    | VektorBoolov.prazen =>
+        ys
+    | VektorBoolov.sestavljen x xs' =>
+        .sestavljen x (stakniVektor xs' ys)
+
+def stakniVektor' {m n : Nat} :
+  VektorBoolov m ->
+  VektorBoolov n ->
+  VektorBoolov (m + n)
+:=
+  fun xs ys =>
+    match xs with
+    | VektorBoolov.prazen =>
+        by
+          rw [Nat.zero_add]
+          exact ys
+    | VektorBoolov.sestavljen x xs' =>
+        by
+          rw [Nat.succ_add]
+          exact .sestavljen x (stakniVektor' xs' ys)
+
+-- Primer uporabe Eq.mpr, ki spremeni tip, če imamo dokaz, da sta tipa enaka
+#check Eq.mpr
+def stakniVektor'' {m n : Nat} :
+  VektorBoolov m ->
+  VektorBoolov n ->
+  VektorBoolov (m + n)
+:=
+  fun xs ys =>
+    match xs with
+    -- Manjka dokaz: ⊢ VektorBoolov (0 + n) = VektorBoolov n
+    | VektorBoolov.prazen => Eq.mpr sorry ys -- Dokaz (0+n = n) podamo kot argument dokazu enakosti dolžin vektorjev
+    | VektorBoolov.sestavljen x xs' =>
+        by
+          rw [Nat.succ_add]
+          exact .sestavljen x (stakniVektor' xs' ys)
+
+-- Pomembno, kje delamo match (indukcijo)
+def stakniVektor''' {m n : Nat} :
+  VektorBoolov m ->
+  VektorBoolov n ->
+  VektorBoolov (m + n)
+:=
+  fun xs ys =>
+    match ys with
+    | VektorBoolov.prazen =>
+        xs
+    | VektorBoolov.sestavljen y ys' =>
+        .sestavljen y (stakniVektor''' xs ys')
 
 
-def downcast: a < b -> Finite a -> Finite b
+-- ----- ----- ----- ----- -----
+-- Varno branje elementov vektorja
+inductive Finite : Nat -> Type where
+  | fzero : {n : Nat} -> Finite (Nat.succ n)
+  | fsucc : {n : Nat} -> Finite n -> Finite (Nat.succ n)
 
-def lookup {A : Type} {n : Naravno} : Vektor A n -> Finite n -> A :=
+-- Vsi elementi v Finite 3:
+def elementiFinite3 : List (Finite 3) :=
+  [ Finite.fzero,
+    Finite.fsucc Finite.fzero,
+    Finite.fsucc (Finite.fsucc Finite.fzero)
+  ]
+
+-- Funkcija za varno branje elementov vektorja
+def vpogled {n : Nat} : VektorBoolov n -> Finite n -> Bool :=
   sorry
 
+-- Vektor z dvema elementoma ([true, false])
+def testniVektor : VektorBoolov 2 :=
+  VektorBoolov.sestavljen true (VektorBoolov.sestavljen false VektorBoolov.prazen)
+-- Indeks tipa Finite 2
+def index1 : Finite 2 :=
+  Finite.fsucc Finite.fzero
 
--- Včasih enakost tipov ni takoj očitna in jo moramo izpeljati
--- Dopolnite naslednjo definicijo, vse potrebne leme pa dokažite kar s taktiko `sorry`.
+#eval vpogled testniVektor index1
+-- Če definiramo prazen vektor, potem `vpogled` ne more biti poklican z nobenim indeksom.
+#eval vpogled VektorBoolov.prazen Finite.fzero
 
-def plus_zero (n : Naravno) : (plus n Naravno.nic) = n := by
+
+-- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+-- Vektor z elementi poljubnega tipa A
+
+inductive VektorPoljuben where
   sorry
 
-def plus_add_suc (m n : Naravno) : (plus m (Naravno.naslednik n)) = (Naravno.naslednik (plus m n)) := by
-  sorry
-
-def plus_comm (m n : Naravno) : (plus m n) = (plus n m) := by
-  sorry
-
--- xs ys
--- xs @ ys : Vector A (n + m)
--- xs @ ys : Vector A (m + n)
-def stakni_vektorja' : {A : Type} → {m n : Naravno} → Vektor A m → Vektor A n → Vektor A (plus n m) :=
-fun {A : Type} {m n : Naravno} (xs : Vektor A m) (ys : Vektor A n) =>
-  match xs with
-    | Vektor.prazen =>
-      by
-        rw [plus_zero]
-        exact ys
-    | Vektor.sestavljen x xs' =>
-      by
-        have aux := Vektor.sestavljen x (stakni_vektorja xs' ys)
-        rw [plus_add_suc, plus_comm]
-        exact aux
-
-
--- Uporabite samo definicijo `stakni_vektorja'` in taktike `rw` in `exact`.
-def stakni_vektorja'' : {A : Type} → {m n : Naravno} → Vektor A m → Vektor A n → Vektor A (plus m n) :=
-  fun {A : Type} {m n : Naravno} (xs : Vektor A m) (ys : Vektor A n) =>
-    by
-      have aux := stakni_vektorja' xs ys
-      rw [plus_comm]
-      exact aux
-
-
-#print stakni_vektorja''
+-- Primer vektorja z elementi tipa Nat
+def vektorNaravnihStevil : VektorPoljuben Nat 3 :=
+  VektorPoljuben.sestavljen 10
+    (VektorPoljuben.sestavljen 20
+      (VektorPoljuben.sestavljen 30
+        (VektorPoljuben.prazen)))
