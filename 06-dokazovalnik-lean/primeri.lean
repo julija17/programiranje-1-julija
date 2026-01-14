@@ -3,11 +3,11 @@ def f2 (x : Int) : Int := x + 1
 def f3 (x : Int) := x + 1
 def f4 x := x + 1
 
-#eval f 10
+#eval f1 10
 
-#print f
+#print f1
 
-#check f 10
+#check f2 10
 
 def stakni (xs : List Int) (ys : List Int) :=
   match xs with

@@ -18,13 +18,37 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  - : int list = [7]
 [*----------------------------------------------------------------------------*)
 
+let rec insert y xs =
+    match xs with
+    | [] -> [y]
+    | x :: xs' -> 
+        if x < y then (x :: insert y xs')
+        else y :: xs
+
 
 (*----------------------------------------------------------------------------*]
  Prazen seznam je že urejen. Funkcija [insert_sort] uredi seznam tako da
  zaporedoma vstavlja vse elemente seznama v prazen seznam.
 [*----------------------------------------------------------------------------*)
 
+(* let insert_sort xs =
+    let rec aux i sez =
+        if i < List.length xs then
+            let znak = List.nth xs i in
+            aux (i + 1) (insert znak sez)
+        else
+            sez
+    in
+    aux 0 [] *)
 
+let rec insert_sort xs =
+    match xs with
+    | [] -> []
+    | x :: xs' -> 
+        let rest = insert_sort xs' in (* T_insert_sort(n-1) *)
+        insert x rest (* O(n) *)
+
+(* T(n) = T(n-1) + O(n) = O(n**2) *)
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
  Urejanje z Izbiranjem
@@ -49,6 +73,9 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  Urejanje z Izbiranjem na Tabelah
 [*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*)
 
+(* let _ ? d.(3) <_ 3 in
+d.(3) <- 3; *)
+
 (*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*]
  Pri delu z tabelami (array) namesto seznami, lahko urejanje z izbiranjem 
  naredimo "na mestu", t.j. brez uporabe vmesnih kopij (delov) vhoda. Kot prej
@@ -72,6 +99,13 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  - : int array = [|0; 4; 2; 3; 1|]
 [*----------------------------------------------------------------------------*)
 
+let swap a i j =
+    let prvi = a.(i) in
+    let drugi = a.(j) in
+    a.(i) <- drugi; (* isto kot Array.set a j drugi*)
+    a.(j) <- prvi
+
+    (* O(1) *)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [index_min a lower upper] poišče indeks najmanjšega elementa tabele
@@ -80,10 +114,25 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  index_min [|0; 2; 9; 3; 6|] 2 4 = 3
 [*----------------------------------------------------------------------------*)
 
+let index_min arr lower upper = 
+    let ind_min = ref lower in (*referenca*)
+    for i = lower to upper do
+        if arr.(i) < arr.(!ind_min) then (*sklic na vrednost v referenci*)
+            ind_min := i (* popravimo referenco enako: Ref.set ind_min i*)
+        else
+            ()
+    done;
+    !ind_min (*vrne številko v referenci*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [selection_sort_array] implementira urejanje z izbiranjem na mestu. 
 [*----------------------------------------------------------------------------*)
+
+let selection_sort_array arr =
+    for pointer = 0 to Array.length arr - 1 do
+        let min_i = index_min arr pointer (Array.length arr - 1) in (* O(n**2) )*)
+        swap arr min_i pointer
+    done (* for vrne unit *)
 
 
 (*----------------------------------------------------------------------------*]

@@ -21,6 +21,33 @@
 #
 ###############################################################################
 
+#def merge(target, list_1, list_2) :
+#    for i in range(0, len(target)) :
+#        if list_1[0] <= list_2[0] :
+#            target[i] = list_1[0]
+#            list_1 = list_1[1:]
+#        elif list_1[0] > list_2[0] or list_1 == []:
+#            target[i] = list_2[0]
+#            list_2 = list_2[1:]
+#    return None
+    
+def merge(target, list1, list2) :
+    i1 = 0
+    i2 = 0
+    while i1 < len(list1) and i2 < len(list2) :
+        if list1[i1] <= list2[i2] :
+            target[i1 + i2] = list1[i1]
+            i1 += 1
+        else:
+            target[i1 + i2] = list2[i2]
+            i2 += 1
+    while i1 < len(list1) :
+        target[i1 + i2] = list1[i1]
+        i1 += 1
+    while i2 < len(list2) :
+        target[i1 + i2] = list1[i2]
+        i2 += 1
+    
 
 ###############################################################################
 # Tabelo želimo urediti z zlivanjem (merge sort). Tabelo razdelimo na polovici,
@@ -37,6 +64,8 @@
 #     >>> a
 #     [2, 3, 4, 5, 10, 11, 15, 17, 18]
 ###############################################################################
+
+
 
 ###############################################################################
 # Na predavanjih ste implementirali imperativno verzijo pivotiranja v OCamlu, 
@@ -72,6 +101,7 @@
 ###############################################################################
 
 
+
 ###############################################################################
 # V tabeli želimo poiskati vrednost k-tega elementa po velikosti.
 #
@@ -83,9 +113,10 @@
 #  2, 3 in 4. Pri tem štejemo indekse od 0 naprej, torej je "ničti" element 2.
 #
 # Sestavite funkcijo [kth_element(a, k)], ki v tabeli [a] poišče [k]-ti element
-# po velikosti. Funkcija sme spremeniti tabelo [a]. Cilj naloge je, da jo
+# po velikosti. Funkcija sme spremeniti tabele [a]. Cilj naloge je, da jo
 # rešite brez da v celoti uredite tabelo [a].
 ###############################################################################
+
 
 
 ###############################################################################
@@ -102,3 +133,37 @@
 #     >>> a
 #     [2, 3, 4, 5, 10, 11, 15, 17, 18]
 ###############################################################################
+
+def quicksort_part(a, start, end):
+    pindex = start
+    pivot = a[pindex]
+    desno = start + 1
+    while desno < end:
+        if desno >= pivot:
+            desno += 1
+        else:
+            zadnji = a[desno]
+            naslednjik = a[pindex + 1]
+            a[pindex] = zadnji
+            a[pindex + 1] = pivot
+            a[desno] = naslednjik
+            desno += 1  
+            pindex += 1
+
+
+def pivot(a, start, end):
+    ind_pivota = start
+    naslednji = start + 1
+    while naslednji < end + 1:
+        if a[naslednji] < a[ind_pivota]:
+            pivot = a[int_pivota]
+            a[ind_pivota] = a[naslednji]
+            a[naslednji] = a[ind_pivota + 1]
+            a[ind_pivota + 1] = pivot
+            ind_pivota += 1
+        naslednji += 1
+    return ind_pivota
+
+
+def quicksort(a):
+    return None
