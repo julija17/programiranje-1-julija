@@ -4,19 +4,60 @@ from functools import cache
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Napišite funkcijo `najdaljse_narascajoce_podazporedje`, ki sprejme seznam in
+# Napišite funkcijo `najdaljse_narascajoce_podzaporedje`, ki sprejme seznam in
 # poišče najdaljše (ne strogo) naraščajoce podzaporedje števil v seznamu.
 #
 # Primer: v seznamu `[2, 3, 6, 8, 4, 4, 6, 7, 12, 8, 9]` kot rezultat vrne
 # podzaporedje `[2, 3, 4, 4, 6, 7, 8, 9]`.
 # -----------------------------------------------------------------------------
 
+def najdaljse_narascajoce_podzaporedje(sez):
+    n = len(sez)
+    rezultati = [[] for _ in range(n)]
+    najdaljši_podseznam = []
+
+    # rekurzivna formula
+    for i in range(n - 1, -1, -1):
+        kandidat = [sez[i]]
+        for j in range(i + 1, n):
+            if sez[i] <= sez[j]:
+                nov_kandidat = [sez[i]] + rezultati[j]
+                if len(nov_kandidat) > len(kandidat):
+                    kandidat = nov_kandidat
+        
+        rezultati[i] = kandidat
+        if len(rezultati[i]) > len(najdaljši_podseznam):
+            najdaljši_podseznam = rezultati[i]
+      
+    return najdaljši_podseznam
+
+
 # -----------------------------------------------------------------------------
 # Rešitev sedaj popravite tako, da funkcija `vsa_najdaljsa` vrne seznam vseh
 # najdaljših naraščajočih podzaporedij.
 # -----------------------------------------------------------------------------
 
+def vsa_najdaljsa(sez):
+    n = len(sez)
+    rezultati = [[] for _ in range(n)]
+    najdaljši_podseznami = [ [] ]
 
+    # rekurzivna formula
+    for i in range(n - 1, -1, -1):
+        kandidat = [sez[i]]
+        for j in range(i + 1, n):
+            if sez[i] <= sez[j]:
+                nov_kandidat = [sez[i]] + rezultati[j]
+                if len(nov_kandidat) > len(kandidat):
+                    kandidat = nov_kandidat
+        
+        rezultati[i] = kandidat
+        if len(rezultati[i]) == len(najdaljši_podseznami[0]):
+            najdaljši_podseznami.append(rezultati[i])
+        elif len(rezultati[i]) > len(najdaljši_podseznami[0]):
+            najdaljši_podseznami = [rezultati[i]]
+      
+    return najdaljši_podseznami
 
 # =============================================================================
 # Žabica
@@ -43,6 +84,23 @@ from functools import cache
 # dva.
 # =============================================================================
 
+def zabica(mocvara):
+    n = len(mocvara)
+    @cache
+    def zaba(i, e):
+        #robni primeri
+        if i + e >= n:
+            return 1
+        #rekurzivna formula
+        najmanj_skokov = n
+        for skok in range(1, e + 1):
+            nov_i = i + skok
+            nov_e = e - skok + mocvara[nov_i]
+            stevilo_skokov_od_tu = zaba(nov_i, nov_e) + 1
+            najmanj_skokov = min(najmanj_skokov, stevilo_skokov_od_tu)
+        return najmanj_skokov
+
+    return zaba(0, mocvara[0])
 
 
 # =============================================================================
@@ -65,8 +123,22 @@ from functools import cache
 #     [1, 1, 0, 0, 1, 1, 0, 1, 1]
 #     [0, 1, 1, 0, 1, 1, 0, 1, 1]
 # =============================================================================
+@cache
+def nageljni(n, m, l):
+    if m == 0:
+        return [[0] * n] # seznam 1 rešitve
+    if m * l + (m - 1) > n:
+        return [] # seznam 0 rešitev
+    
+    postavitve = []
+    for resitev in nageljni(n - l - 1, m - 1, l):
+        nova_postavitev = [1] * l + [0] + resitev
+        postavitve.append(nova_postavitev)
+    for resitev in nageljni(n - 1, m, l):
+        nova_postavitev = [0] + resitev
+        postavitve.append(nova_postavitev)
 
-
+    return postavitve
 
 # =============================================================================
 # Pobeg iz Finske
